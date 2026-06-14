@@ -1,19 +1,24 @@
 # lark_bridge
 
-Python port of lark-channel-bridge core logic. Bridges Feishu/Lark messenger with local Claude Code CLI.
+Python port of [lark-channel-bridge](https://github.com/zarazhangrui/lark-coding-agent-bridge) core logic. Bridges Feishu/Lark messenger with local Claude Code CLI.
 
-## Features
+## Implemented Features
 
-- **WebSocket** (when `websocket-client` available) or **HTTP polling** fallback
-- **Text reply mode** — collects Claude output, sends as Feishu `post` format (code blocks supported)
-- **Session management** — per-chat sessions persisted to `~/.lark_bridge/sessions.json`
-- **Slash commands**: `/help`, `/status`, `/new`, `/config`, `/stop`, `/cd`
-- **Claude adapter** — spawns `claude -p --output-format stream-json`, parses AgentEvents
+| Feature | Status |
+|---|---|
+| HTTP polling mode (receives Feishu messages, no external deps) | ✅ |
+| WebSocket mode (requires `websocket-client`) | ✅ optional |
+| Claude Code integration (`--output-format stream-json` + `--resume`) | ✅ |
+| Text reply mode (Feishu `post` format with code blocks) | ✅ |
+| Session persistence (JSON, per-chat) | ✅ |
+| Conversation context continuity (`session_id` → `--resume`) | ✅ |
+| Slash commands: `/help`, `/status`, `/new`, `/config`, `/stop`, `/cd` | ✅ |
 
-## What's deliberately skipped
+## What's NOT implemented (deliberately skipped)
 
-- `card` / `markdown` reply mode (card streaming broken on Windows due to `@larksuite/channel` SDK bug — `cardid is invalid` error 230099)
-- `exec` provider for lark-cli (Go binary `os.Stat` returns 0666 on Windows regardless of ACL)
+- `card` / `markdown` reply modes — broken on Windows due to `@larksuite/channel` SDK bug (Error 230099: `cardid is invalid`)
+- Codex adapter — Claude only
+- Multi-profile, daemon management, document comments, advanced access control
 
 ## Quick Start
 
@@ -22,25 +27,26 @@ cd lark_bridge
 PYTHONPATH=. python -m lark_bridge
 ```
 
-## Configuration
+Prerequisites:
+- Python 3.9+
+- Claude Code CLI installed (`claude` on PATH)
+- Feishu app with `im:message` permission
+- Edit `lark_bridge/config.py` to set `APP_ID` and `APP_SECRET`
 
-Edit `lark_bridge/config.py`:
-- `APP_ID` / `APP_SECRET` — your Feishu app credentials
-- `TENANT` — `"feishu"` (China) or `"lark"` (global)
+Optional: `pip install websocket-client` for WebSocket mode (falls back to HTTP polling otherwise).
 
 ## Architecture
 
 ```
 lark_bridge/
-  __init__.py          # Package init
-  __main__.py          # python -m lark_bridge entry
-  main.py              # Main loop, WS/poll dispatch
-  config.py            # App config & preferences
-  feishu_client.py     # Feishu API (HTTP + WS + token)
-  claude_adapter.py    # Claude spawn + stream-json parser
-  session.py           # Per-chat session store
-  commands.py          # Slash commands
-  reply.py             # Reply formatting (text→post)
+├── main.py              # Entry point — WS/poll dispatch, message handler
+├── config.py            # AppConfig, BridgePrefs, lark-cli keychain helpers
+├── feishu_client.py     # Token cache, WS connect, message parse, reply API
+├── claude_adapter.py    # Claude spawn, stream-json parser, translate_event
+├── session.py           # SessionStore — per-chat sessions (JSON, session_id)
+├── commands.py          # Slash commands (/help /status /new /config /stop /cd)
+├── reply.py             # RunState + reduce(), text→post renderer
+└── __main__.py          # python -m lark_bridge entry
 ```
 
 ## License
