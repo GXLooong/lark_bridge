@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+.pytest_cache/
+*.swp
+*.swo
+*~
+.DS_Store
+lark_bridge.egg-info/

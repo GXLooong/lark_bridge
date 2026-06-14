@@ -1,0 +1,13 @@
+[project]
+name = "lark-bridge"
+version = "0.1.0"
+description = "Python port of lark-channel-bridge: Feishu/Lark <-> Claude Code bridge"
+requires-python = ">=3.9"
+dependencies = ["websocket-client>=1.0"]
+
+[project.scripts]
+lark-bridge = "lark_bridge.main:main"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
